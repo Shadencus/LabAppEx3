@@ -26,4 +26,9 @@ interface TodoItemDao {
     @Delete
     fun delete(toDoItem: TodoItem)
 
+    //Prüft, ob es Einträge gibt, die teils oder ganz dem übergebenen Wert entsprechen und
+    //gibt eine Liste mit diesen zurück
+    @Query("SELECT * FROM todoitem WHERE text LIKE '%' || :text || '%'")
+    fun search(text: String): List<TodoItem>
+
 }

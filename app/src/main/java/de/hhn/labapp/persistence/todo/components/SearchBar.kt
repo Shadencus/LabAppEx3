@@ -1,5 +1,6 @@
 package de.hhn.labapp.persistence.todo.components
 
+import android.util.Log
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Icon
@@ -12,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.setValue
+import de.hhn.labapp.persistence.todo.viewmodel.TodoListViewModel
 
 @Composable
 fun SearchBar(
@@ -29,12 +31,14 @@ fun SearchBar(
         onValueChange = {
             searchQuery = it
             onQueryChanged(it)
+
         },
         label = {
             Text(placeholder)
         },
         trailingIcon = {
             if (searchQuery.isNotEmpty()) {
+
                 IconButton(
                     onClick = {
                         searchQuery = ""

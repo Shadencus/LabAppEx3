@@ -1,5 +1,6 @@
 package de.hhn.labapp.persistence.todo.components
 
+import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -22,7 +23,7 @@ import de.hhn.labapp.persistence.todo.viewmodel.TodoListViewModel
 @Composable
 fun TodoList() {
     val viewModel = TodoListViewModel()
-    LaunchedEffect(viewModel){
+    LaunchedEffect(viewModel) {
         viewModel.init()
     }
 
@@ -42,9 +43,16 @@ fun TodoList() {
             SearchBar(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 4.dp,)
+                    .padding(horizontal = 4.dp)
                     .padding(bottom = 16.dp),
-                onQueryChanged = {},
+                onQueryChanged = {
+                    if (it.isNullOrBlank()) {
+                        viewModel.init()
+                    } else {
+                        viewModel.searchItem(it)
+                        Log.d("Info3", viewModel.todoItems.size.toString())
+                    }
+                },
             )
             TodoItemsList(viewModel)
         }
