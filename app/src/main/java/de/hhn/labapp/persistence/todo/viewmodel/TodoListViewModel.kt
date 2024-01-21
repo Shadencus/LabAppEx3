@@ -1,17 +1,22 @@
 package de.hhn.labapp.persistence.todo.viewmodel
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
-import de.hhn.labapp.persistence.todo.model.TodoItem
+import androidx.lifecycle.viewModelScope
+import de.hhn.labapp.persistence.todo.model.AppDatabase
+import de.hhn.labapp.persistence.todo.model.DatabaseProvider.withDatabase
+import de.hhn.labapp.persistence.todo.model.dao.TodoItemDao
+import de.hhn.labapp.persistence.todo.model.entity.TodoItem
+import kotlinx.coroutines.launch
 
-class TodoListViewModel : ViewModel() {
-    val todoItems = mutableStateListOf(*createSampleData().toTypedArray())
+class TodoListViewModel(
+
+) : ViewModel() {
+    var todoItems = mutableStateListOf<TodoItem>()
         @Synchronized get
     var currentItemText by mutableStateOf("")
     var currentItem by mutableStateOf<TodoItem?>(null)
+
 
     val showDialog: Boolean
         get() = currentItem != null
@@ -20,8 +25,12 @@ class TodoListViewModel : ViewModel() {
         get() = currentItemText.isNotBlank()
 
     fun onItemChecked(newValue: Boolean, item: TodoItem) {
-        val index = todoItems.indexOf(item)
-        todoItems[index] = item.copy(completed = newValue)
+        //val index = todoItems.indexOf(item)
+        //todoItems[index] = item.copy(completed = newValue)
+        item.completed = newValue
+        withDatabase {
+            todoItemDao().update(item)
+        }
     }
 
     fun onItemClicked(item: TodoItem) {
@@ -29,24 +38,32 @@ class TodoListViewModel : ViewModel() {
     }
 
     fun deleteItem(item: TodoItem): Boolean {
-        todoItems.remove(item)
+        //todoItems.remove(item)
+        withDatabase { todoItemDao().delete(item) }
+        loadTodoList()
         return true
     }
 
     fun onAddItem() {
         val item = TodoItem(text = "")
-        todoItems.add(item)
+        withDatabase { todoItemDao().insert(item) }
         currentItem = item
     }
 
     fun onSaveItem() {
         if (currentItem == null) {
             return
-        }
+        }else{
+            //var text = currentItem!!.copy(text = currentItemText)
+            val item: TodoItem = currentItem!!
+            val text = currentItemText
+            item.text = text
+            withDatabase {
+                todoItemDao().update(item)
+            }
 
-        val item = currentItem!!.copy(text = currentItemText)
-        val index = todoItems.indexOf(currentItem!!)
-        todoItems[index] = item
+        }
+        loadTodoList()
     }
 
     private fun createSampleData(): List<TodoItem> {
@@ -55,5 +72,21 @@ class TodoListViewModel : ViewModel() {
             TodoItem(text = "Buy eggs"),
             TodoItem(text = "Buy bread"),
         )
+    }
+
+    fun init() {
+        viewModelScope.launch {
+            loadTodoList()
+        }
+    }
+
+    private fun loadTodoList() {
+        withDatabase {
+            val temp = todoItemDao().getAll()
+
+            synchronized(todoItems){
+                todoItems = temp.toMutableStateList()
+            }
+        }
     }
 }
